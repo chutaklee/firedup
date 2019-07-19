@@ -177,7 +177,7 @@ if __name__ == '__main__':
     valid_algos = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac', 'dqn']
 
     # more algorithms
-    valid_algos += ['c51', 'qr_dqn']
+    valid_algos += ['double_dqn', 'dueling_dqn', 'c51', 'qr_dqn']
 
     valid_utils = ['plot', 'test_policy']
     valid_help = ['--help', '-h', 'help']
