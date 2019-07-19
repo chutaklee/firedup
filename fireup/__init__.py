@@ -7,7 +7,9 @@ from fireup.algos.trpo.trpo import trpo
 from fireup.algos.vpg.vpg import vpg
 from fireup.algos.dqn.dqn import dqn
 
+# more algorithms
 from fireup.algos.c51.c51 import c51
+from fireup.algos.qr_dqn.qr_dqn import qr_dqn
 
 # Loggers
 from fireup.utils.logx import Logger, EpochLogger
