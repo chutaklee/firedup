@@ -42,7 +42,7 @@ class ReplayBuffer:
 
 """
 
-Categorical Deep Q-Network
+Categorical Deep Q-Network from https://arxiv.org/abs/1707.06887
 
 """
 def c51(
@@ -54,7 +54,7 @@ def c51(
     epochs=100,
     replay_size=int(1e6),
     Vmin=-100.0,  # hyperparameters for not-atari env
-    Vmax=100.0,  # c51 hyperparameters for not-atari env
+    Vmax=100.0,  # hyperparameters for not-atari env
     num_atoms=50,  # hyperparameters for not-atari env
     gamma=0.99,
     min_replay_history=20000,

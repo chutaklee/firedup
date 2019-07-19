@@ -40,6 +40,11 @@ class ReplayBuffer:
         )
 
 
+"""
+
+Quantile Regression Deep Q-Network from http://arxiv.org/abs/1806.06923
+
+"""
 def qr_dqn(
     env_fn,
     dqnetwork=core.DQNetwork,
