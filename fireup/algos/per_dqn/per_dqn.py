@@ -127,14 +127,10 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             self._max_priority = max(self._max_priority, priority)
 
 
-"""
-
-Deep Q-Network w/ Prioritized Experience Replay from https://arxiv.org/abs/1511.05952
-
-"""
 def per_dqn(
     env_fn,
-    dqnetwork=core.DQNetwork,
+    dueling_dqn=False,
+    double_dqn=False,
     ac_kwargs=dict(),
     seed=0,
     steps_per_epoch=5000,
@@ -156,6 +152,23 @@ def per_dqn(
     logger_kwargs=dict(),
     save_freq=1
 ):
+    """
+    Deep Q-Network w/ Prioritized Experience Replay from https://arxiv.org/abs/1511.05952
+
+    positional arguments:
+
+        --prioritized_replay_alpha
+
+        --beta_start
+
+        --beta_frames
+
+    optional arguments:
+
+        --dueling_dqn    enable Dueling DQN from https://arxiv.org/abs/1511.06581
+
+        --double_dqn     enable Double DQN from https://arxiv.org/abs/1509.06461
+    """
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
 
@@ -169,6 +182,11 @@ def per_dqn(
     # Share information about action space with policy architecture
     ac_kwargs['action_space'] = env.action_space
 
+    if dueling_dqn:
+        dqnetwork = core.DuelingDQNetwork
+    else:
+        dqnetwork = core.DQNetwork
+
     # Main computation graph
     main = dqnetwork(in_features=obs_dim, **ac_kwargs)
 
@@ -179,11 +197,16 @@ def per_dqn(
     replay_buffer = PrioritizedReplayBuffer(replay_size, prioritized_replay_alpha)
 
     # Count variables
-    var_counts = tuple(core.count_vars(module) for module in [main.q, main])
-    print(('\nNumber of parameters: \t q: %d, \t total: %d\n')%var_counts)
+    if dueling_dqn:
+        var_counts = tuple(
+        core.count_vars(module) for module in [main.enc, main.v, main.a, main])
+        print(('\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n')%var_counts)
+    else:
+        var_counts = tuple(core.count_vars(module) for module in [main.q, main])
+        print(('\nNumber of parameters: \t q: %d, \t total: %d\n')%var_counts)
 
     # Value train op
-    value_params = main.q.parameters()
+    value_params = main.parameters()
     value_optimizer = torch.optim.Adam(value_params, lr=lr)
 
     # Initializing targets to match main variables
@@ -263,7 +286,11 @@ def per_dqn(
                 batch['idxes']
             )
             q_pi = main(obs1).gather(1, acts.long()).squeeze()
-            q_pi_targ, _ = target(obs2).max(1)
+            if double_dqn:
+                next_act_idx = main(obs2).argmax(-1, keepdim=True)
+                q_pi_targ = target(obs2).gather(1, next_act_idx).squeeze()
+            else:
+                q_pi_targ, _ = target(obs2).max(1)
 
             # Bellman backup for Q function
             backup = (rews + gamma * (1 - done) * q_pi_targ).detach()

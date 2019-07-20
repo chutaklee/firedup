@@ -69,3 +69,39 @@ class DQNetwork(nn.Module):
 
     def policy(self, x):
         return torch.argmax(self.q(x), dim=1, keepdim=True)
+
+
+class DuelingDQNetwork(nn.Module):
+    def __init__(self,
+                 in_features,
+                 action_space,
+                 hidden_sizes=(400, 300),
+                 activation=torch.relu,
+                 output_activation=None):
+        super(DuelingDQNetwork, self).__init__()
+
+        action_dim = action_space.n
+
+        self.enc = MLP(
+            layers=[in_features] + list(hidden_sizes),
+            activation=activation,
+            output_activation=output_activation)
+
+        self.v = MLP(
+            layers=[hidden_sizes[-1], 1],
+            activation=activation,
+            output_activation=output_activation)
+
+        self.a = MLP(
+            layers=[hidden_sizes[-1], action_dim],
+            activation=activation,
+            output_activation=output_activation)
+
+    def forward(self, x):
+        enc = self.enc(x)
+        a = self.a(enc)
+        return self.v(enc) + a - a.mean()
+
+    def policy(self, x):
+        return torch.argmax(self.forward(x), dim=1, keepdim=True)
+
