@@ -93,7 +93,7 @@ def dueling_dqn(
     # Count variables
     var_counts = tuple(
         core.count_vars(module) for module in [main.enc, main.v, main.a, main])
-    print(('\nNumber of parameters: \t encoder: %d, \t v: %d \t advantage: %d \t total: %d\n')%var_counts)
+    print(('\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n')%var_counts)
 
     # Value train op
     value_params = main.parameters()
