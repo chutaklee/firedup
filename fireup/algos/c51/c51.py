@@ -130,7 +130,7 @@ def c51(
                 ep_len += 1
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
 
-    def learn():
+    def update():
         main.train()
         batch = replay_buffer.sample_batch(batch_size)
         (obs1, obs2, acts, rews, done) = (
@@ -230,7 +230,7 @@ def c51(
 
         # train at the rate of update_period if enough training steps have been run
         if replay_buffer.size > min_replay_history and t % update_period == 0:
-            loss, QDist = learn()
+            loss, QDist = update()
             logger.store(LossQ=loss, QVals=QDist.mean(-1))
 
         # syncs weights from online to target network
