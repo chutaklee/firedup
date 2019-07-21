@@ -50,8 +50,8 @@ class CategoricalDQNetwork(nn.Module):
     def __init__(
         self, in_features, action_space,
         num_atoms=50,
-        Vmin=-10,
-        Vmax=10,
+        Vmin=-100,
+        Vmax=100,
         hidden_sizes=(400, 300),
         activation=torch.relu,
         output_activation=None

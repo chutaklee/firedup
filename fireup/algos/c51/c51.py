@@ -79,8 +79,11 @@ def c51(
     obs_dim = env.observation_space.shape[0]
     act_dim = 1  # env.action_space.shape
 
-    # Share information about action space with policy architecture
+    # Share information with policy architecture
     ac_kwargs['action_space'] = env.action_space
+    ac_kwargs['num_atoms'] = num_atoms
+    ac_kwargs['Vmin'] = Vmin
+    ac_kwargs['Vmax'] = Vmax
 
     # Main computation graph
     main = dqnetwork(in_features=obs_dim, **ac_kwargs)
@@ -188,7 +191,6 @@ def c51(
         value_optimizer.step()
 
         return loss.item(), pns_a.numpy()
-
 
     start_time = time.time()
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
