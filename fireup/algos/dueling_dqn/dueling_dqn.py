@@ -50,6 +50,7 @@ Dueling Deep Q-Network from https://arxiv.org/abs/1511.06581
 def dueling_dqn(
     env_fn,
     dqnetwork=core.DuelingDQNetwork,
+    double_dqn=False,
     ac_kwargs=dict(),
     seed=0,
     steps_per_epoch=5000,
@@ -175,7 +176,12 @@ def dueling_dqn(
                 torch.Tensor(batch['done'])
             )
             q_pi = main(obs1).gather(1, acts.long()).squeeze()
-            q_pi_targ, _ = target(obs2).max(1)
+
+            if double_dqn:
+                next_act_idx = main(obs2).argmax(-1, keepdim=True)
+                q_pi_targ = target(obs2).gather(1, next_act_idx).squeeze()
+            else:
+                q_pi_targ, _ = target(obs2).max(1)
 
             # Bellman backup for Q function
             backup = (rews + gamma * (1 - done) * q_pi_targ).detach()
