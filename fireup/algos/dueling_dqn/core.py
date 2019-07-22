@@ -52,7 +52,7 @@ class DuelingDQNetwork(nn.Module):
                  output_activation=None):
         super(DuelingDQNetwork, self).__init__()
 
-        action_dim = action_space.n
+        self.action_dim = action_space.n
 
         self.enc = MLP(
             layers=[in_features] + list(hidden_sizes),
@@ -65,14 +65,14 @@ class DuelingDQNetwork(nn.Module):
             output_activation=output_activation)
 
         self.a = MLP(
-            layers=[hidden_sizes[-1], action_dim],
+            layers=[hidden_sizes[-1], self.action_dim],
             activation=activation,
             output_activation=output_activation)
 
     def forward(self, x):
         enc = self.enc(x)
         a = self.a(enc)
-        return self.v(enc) + a - a.mean()
+        return self.v(enc) + a - a.mean(1, True)
 
     def policy(self, x):
         return torch.argmax(self.forward(x), dim=1, keepdim=True)
