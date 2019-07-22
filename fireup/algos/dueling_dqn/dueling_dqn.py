@@ -1,8 +1,10 @@
+import time
+
+import gym
 import numpy as np
 import torch
 import torch.nn.functional as F
-import gym
-import time
+
 from fireup.algos.dueling_dqn import core
 from fireup.utils.logx import EpochLogger
 
@@ -36,7 +38,8 @@ class ReplayBuffer:
             obs2=self.obs2_buf[idxs],
             acts=self.acts_buf[idxs],
             rews=self.rews_buf[idxs],
-            done=self.done_buf[idxs])
+            done=self.done_buf[idxs]
+        )
 
 
 """
@@ -65,8 +68,6 @@ def dueling_dqn(
     logger_kwargs=dict(),
     save_freq=1
 ):
-
-
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
 
@@ -92,7 +93,8 @@ def dueling_dqn(
 
     # Count variables
     var_counts = tuple(
-        core.count_vars(module) for module in [main.enc, main.v, main.a, main])
+        core.count_vars(module) for module in [main.enc, main.v, main.a, main]
+    )
     print(('\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n')%var_counts)
 
     # Value train op
@@ -165,11 +167,13 @@ def dueling_dqn(
         if replay_buffer.size > min_replay_history and t % update_period == 0:
             main.train()
             batch = replay_buffer.sample_batch(batch_size)
-            (obs1, obs2, acts, rews, done) = (torch.Tensor(batch['obs1']),
-                                              torch.Tensor(batch['obs2']),
-                                              torch.Tensor(batch['acts']),
-                                              torch.Tensor(batch['rews']),
-                                              torch.Tensor(batch['done']))
+            (obs1, obs2, acts, rews, done) = (
+                torch.Tensor(batch['obs1']),
+                torch.Tensor(batch['obs2']),
+                torch.Tensor(batch['acts']),
+                torch.Tensor(batch['rews']),
+                torch.Tensor(batch['done'])
+            )
             q_pi = main(obs1).gather(1, acts.long()).squeeze()
             q_pi_targ, _ = target(obs2).max(1)
 

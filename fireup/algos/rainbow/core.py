@@ -121,11 +121,12 @@ class CategoricalDuelingDQNetwork(nn.Module):
         enc = self.enc(x)
         a = self.a(enc).view(-1, self.action_dim, self.num_atoms)
         v = self.v(enc).view(-1, 1, self.num_atoms)
-        q = v.expand_as(a) + a - a.mean(1, keepdim=True)
+        q_dist = v + a - a.mean(1, keepdim=True)
+
         if log:
-            return F.log_softmax(q, dim=-1)
+            return F.log_softmax(q_dist, dim=-1)
         else:
-            return F.softmax(q, dim=-1)
+            return F.softmax(q_dist, dim=-1)
 
     def policy(self, x):
         q_dist = self.forward(x)  # (bsz, action_dim, num_atoms)

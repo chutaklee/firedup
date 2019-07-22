@@ -100,7 +100,7 @@ class DuelingDQNetwork(nn.Module):
     def forward(self, x):
         enc = self.enc(x)
         a = self.a(enc)
-        return self.v(enc) + a - a.mean()
+        return self.v(enc) + a - a.mean(1, keepdim=True)
 
     def policy(self, x):
         return torch.argmax(self.forward(x), dim=1, keepdim=True)

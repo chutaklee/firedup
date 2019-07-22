@@ -62,6 +62,7 @@ def c51(
     epsilon_train=0.01,
     epsilon_eval=0.001,
     lr=1e-3,
+    grad_clip=5.0,
     max_ep_len=1000,
     update_period=4,
     target_update_period=8000,
@@ -187,7 +188,7 @@ def c51(
 
         value_optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(main.parameters(), 5)
+        torch.nn.utils.clip_grad_norm_(main.parameters(), grad_clip)
         value_optimizer.step()
 
         return loss.item(), pns_a.numpy()
