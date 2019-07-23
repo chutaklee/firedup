@@ -21,12 +21,13 @@ def beta_by_frame(frame_idx, beta_start=0.4, beta_frames=10000):
 
 
 class MLP(nn.Module):
-    def __init__(self,
-                 layers,
-                 activation=torch.tanh,
-                 output_activation=None,
-                 output_scale=1,
-                 output_squeeze=False):
+    def __init__(
+        self, layers,
+        activation=torch.tanh,
+        output_activation=None,
+        output_scale=1,
+        output_squeeze=False
+    ):
         super(MLP, self).__init__()
         self.layers = nn.ModuleList()
         self.activation = activation
@@ -86,6 +87,9 @@ class CategoricalDQNetwork(nn.Module):
 
 
 class CategoricalDuelingDQNetwork(nn.Module):
+    """
+    value head and advantage head need at least two layers to perform well on LunarLander-v2
+    """
     def __init__(
         self, in_features, action_space,
         num_atoms=50,
@@ -102,17 +106,17 @@ class CategoricalDuelingDQNetwork(nn.Module):
         self.supports = torch.linspace(Vmin, Vmax, num_atoms)
 
         self.enc = MLP(
-            layers=[in_features] + list(hidden_sizes),
+            layers=[in_features] + list(hidden_sizes)[:-1],
             activation=activation,
             output_activation=None
         )
         self.a = MLP(
-            layers=[hidden_sizes[-1], num_atoms * self.action_dim],
+            layers=list(hidden_sizes)[-2:] + [num_atoms * self.action_dim],
             activation=activation,
             output_activation=output_activation
         )
         self.v = MLP(
-            layers=[hidden_sizes[-1], num_atoms],
+            layers=list(hidden_sizes)[-2:] + [num_atoms],
             activation=activation,
             output_activation=output_activation,
         )
