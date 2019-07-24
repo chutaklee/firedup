@@ -58,7 +58,7 @@ class ConvNet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=2),
             nn.ReLU(),
-            nn.Conv2d(in_channesl=64, out_channels=64, kernel_size=(3, 3), stride=1)
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=1)
         )
 
         self.fc = nn.Sequential(
