@@ -215,7 +215,7 @@ def dqn_atari(
             value_optimizer.zero_grad()
             value_loss.backward()
             value_optimizer.step()
-            logger.store(LossQ=value_loss.item(), QVals=q_pi.data.numpy())
+            logger.store(LossQ=value_loss.cpu().item(), QVals=q_pi.cpu().data.numpy())
 
         # syncs weights from online to target network
         if t % target_update_period == 0:
