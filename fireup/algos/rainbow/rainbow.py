@@ -131,6 +131,7 @@ def rainbow(
     env_fn,
     dueling_dqn=False,
     double_dqn=False,
+    noisy=False,
     ac_kwargs=dict(),
     seed=0,
     steps_per_epoch=5000,
@@ -166,6 +167,7 @@ def rainbow(
     act_dim = 1  # env.action_space.shape
 
     # Share information with policy architecture
+    ac_kwargs['use_noisy_layer'] = noisy
     ac_kwargs['action_space'] = env.action_space
     ac_kwargs['num_atoms'] = num_atoms
     ac_kwargs['Vmin'] = Vmin
@@ -205,12 +207,12 @@ def rainbow(
     # Initializing targets to match main variables
     target.load_state_dict(main.state_dict())
 
-    def get_action(o, epsilon):
+    def get_action(o, epsilon=None):
         """Select an action from the set of available actions.
         Chooses an action randomly with probability epsilon otherwise
         act greedily according to the current Q-value estimates.
         """
-        if np.random.random() <= epsilon:
+        if epsilon is not None and np.random.random() <= epsilon:
             return env.action_space.sample()
         else:
             # return the action with highest Q-value for this observation
@@ -243,6 +245,7 @@ def rainbow(
         # compute target distribution
         bsz = obs1.size(0)
         with torch.no_grad():
+            if noisy: target.reset_noise()
             pns = target(obs2)  # (bsz, act_dim, num_atoms)
 
             if double_dqn:
@@ -309,7 +312,7 @@ def rainbow(
             t,
             min_replay_history,
             epsilon_train)
-        a = get_action(o, epsilon)
+        a = get_action(o, epsilon) if not noisy else get_action(o)
 
         # Step the env
         o2, r, done, _ = env.step(a)
@@ -331,6 +334,8 @@ def rainbow(
         if done or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             o, r, done, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+
+        if noisy is True and t % update_period == 0: main.reset_noise()
 
         # train at the rate of update_period if enough training steps have been run
         if len(replay_buffer) > min_replay_history and t % update_period == 0:
