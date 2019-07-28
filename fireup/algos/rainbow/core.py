@@ -197,3 +197,6 @@ class CategoricalDuelingDQNetwork(nn.Module):
         q_vals = (q_dist * self.supports.expand_as(q_dist)).sum(-1)  # (bsz, action_dim)
         action = torch.argmax(q_vals, dim=1, keepdim=True)  # (bsz, 1)
         return action
+
+    def reset_noise(self):
+        raise NotImplementedError

@@ -110,6 +110,7 @@ def noisy_dqn(
             return torch.argmax(q_values, dim=1).item()
 
     def test_agent(n=10):
+        main.eval()
         for _ in range(n):
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
             while not (d or (ep_len == max_ep_len)):
@@ -125,10 +126,11 @@ def noisy_dqn(
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
-        main.eval()
+        main.train()  # enable NoisyNet exploration
 
-        # the epsilon value used for exploration during training
-        a = get_action(o)
+        with torch.no_grad():
+            # the epsilon value used for exploration during training
+            a = get_action(o)
 
         # Step the env
         o2, r, d, _ = env.step(a)

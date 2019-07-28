@@ -149,12 +149,13 @@ def rainbow(
     epsilon_train=0.01,
     epsilon_eval=0.001,
     lr=1e-3,
+    clip_grad_norm=5.0,
     max_ep_len=1000,
     update_period=4,
     target_update_period=8000,
     batch_size=100,
     logger_kwargs=dict(),
-    save_freq=1
+    save_freq=1,
 ):
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
@@ -173,11 +174,7 @@ def rainbow(
     ac_kwargs['Vmin'] = Vmin
     ac_kwargs['Vmax'] = Vmax
 
-    if dueling_dqn:
-        dqnetwork = core.CategoricalDuelingDQNetwork
-    else:
-        dqnetwork = core.CategoricalDQNetwork
-
+    dqnetwork = core.CategoricalDuelingDQNetwork if dueling_dqn else core.CategoricalDQNetwork
     # Main computation graph
     main = dqnetwork(in_features=obs_dim, **ac_kwargs)
 
@@ -194,7 +191,8 @@ def rainbow(
     # Count variables
     if dueling_dqn:
         var_counts = tuple(
-        core.count_vars(module) for module in [main.enc, main.v, main.a, main])
+            core.count_vars(module) for module in [main.enc, main.v, main.a, main]
+        )
         print(('\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n')%var_counts)
     else:
         var_counts = tuple(core.count_vars(module) for module in [main.q, main])
@@ -215,10 +213,12 @@ def rainbow(
         if epsilon is not None and np.random.random() <= epsilon:
             return env.action_space.sample()
         else:
-            # return the action with highest Q-value for this observation
             return main.policy(torch.Tensor(o.reshape(1, -1))).item()
 
+
     def test_agent(n=10):
+        epsilon_eval = None if noisy else epsilon_eval
+        main.eval()
         for _ in range(n):
             o, r, done, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
             while not (done or (ep_len == max_ep_len)):
@@ -227,6 +227,7 @@ def rainbow(
                 ep_ret += r
                 ep_len += 1
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+
 
     def update(t):
         main.train()
@@ -290,7 +291,7 @@ def rainbow(
 
         value_optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(main.parameters(), 5)
+        torch.nn.utils.clip_grad_norm_(main.parameters(), clip_grad_norm)
         value_optimizer.step()
 
         # replay buffer update
@@ -298,21 +299,25 @@ def rainbow(
 
         return loss.item(), pns_a.numpy()
 
+
     start_time = time.time()
     o, r, done, ep_ret, ep_len = env.reset(), 0, False, 0, 0
     total_steps = steps_per_epoch * epochs
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
-        main.eval()
+        main.train()  # enable NoisyNet exploration
 
         # the epsilon value used for exploration during training
         epsilon = core.linearly_decaying_epsilon(
             epsilon_decay_period,
             t,
             min_replay_history,
-            epsilon_train)
-        a = get_action(o, epsilon) if not noisy else get_action(o)
+            epsilon_train
+        ) if noisy else None
+
+        with torch.no_grad():
+            a = get_action(o, epsilon)
 
         # Step the env
         o2, r, done, _ = env.step(a)
