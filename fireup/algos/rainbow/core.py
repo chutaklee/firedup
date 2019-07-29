@@ -71,6 +71,7 @@ class NoisyLinear(nn.Module):
 class MLP(nn.Module):
     def __init__(
         self, layers,
+        Linear=nn.Linear,
         activation=torch.tanh,
         output_activation=None,
         output_scale=1,
@@ -84,8 +85,9 @@ class MLP(nn.Module):
         self.output_squeeze = output_squeeze
 
         for i, layer in enumerate(layers[1:]):
-            self.layers.append(nn.Linear(layers[i], layer))
-            nn.init.zeros_(self.layers[i].bias)
+            self.layers.append(Linear(layers[i], layer))
+            if Linear == nn.Linear:
+                nn.init.zeros_(self.layers[i].bias)
 
     def forward(self, inputs):
         x = inputs
@@ -157,26 +159,32 @@ class CategoricalDuelingDQNetwork(nn.Module):
         Vmax=100,
         hidden_sizes=(400, 300),
         activation=torch.relu,
-        output_activation=None
+        output_activation=None,
+        use_noisy_layer=False,
     ):
         super(CategoricalDuelingDQNetwork, self).__init__()
 
         self.action_dim = action_space.n
         self.num_atoms = num_atoms
         self.supports = torch.linspace(Vmin, Vmax, num_atoms)
+        self.use_noisy_layer = use_noisy_layer
 
         self.enc = MLP(
             layers=[in_features] + list(hidden_sizes)[:-1],
             activation=activation,
             output_activation=None
         )
+
+        Linear = NoisyLinear if use_noisy_layer else nn.Linear
         self.a = MLP(
             layers=list(hidden_sizes)[-2:] + [num_atoms * self.action_dim],
+            Linear=Linear,
             activation=activation,
             output_activation=output_activation
         )
         self.v = MLP(
             layers=list(hidden_sizes)[-2:] + [num_atoms],
+            Linear=Linear,
             activation=activation,
             output_activation=output_activation,
         )
@@ -199,4 +207,7 @@ class CategoricalDuelingDQNetwork(nn.Module):
         return action
 
     def reset_noise(self):
-        raise NotImplementedError
+        assert self.use_noisy_layer is True
+        for i, j in zip(self.a.layers, self.v.layers):
+            i.reset_noise()
+            j.reset_noise()
