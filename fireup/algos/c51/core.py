@@ -12,17 +12,18 @@ def count_vars(module):
 def linearly_decaying_epsilon(decay_period, step, warmup_steps, epsilon):
     steps_left = decay_period + warmup_steps - step
     bonus = (1.0 - epsilon) * steps_left / decay_period
-    bonus = np.clip(bonus, 0., 1. - epsilon)
+    bonus = np.clip(bonus, 0.0, 1.0 - epsilon)
     return epsilon + bonus
 
 
 class MLP(nn.Module):
     def __init__(
-        self, layers,
+        self,
+        layers,
         activation=torch.tanh,
         output_activation=None,
         output_scale=1,
-        output_squeeze=False
+        output_squeeze=False,
     ):
         super(MLP, self).__init__()
         self.layers = nn.ModuleList()
@@ -48,13 +49,15 @@ class MLP(nn.Module):
 
 class CategoricalDQNetwork(nn.Module):
     def __init__(
-        self, in_features, action_space,
+        self,
+        in_features,
+        action_space,
         num_atoms=50,
         Vmin=-100,
         Vmax=100,
         hidden_sizes=(400, 300),
         activation=torch.relu,
-        output_activation=None
+        output_activation=None,
     ):
         super(CategoricalDQNetwork, self).__init__()
 
@@ -65,7 +68,7 @@ class CategoricalDQNetwork(nn.Module):
         self.q = MLP(
             layers=[in_features] + list(hidden_sizes) + [self.action_dim * num_atoms],
             activation=activation,
-            output_activation=output_activation
+            output_activation=output_activation,
         )
 
     def forward(self, x, log=False):

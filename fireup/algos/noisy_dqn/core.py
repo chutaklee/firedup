@@ -18,13 +18,11 @@ class NoisyLinear(nn.Module):
         self.out_features = out_features
         self.std_init = std_init
         self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
-        self.weight_sigma = nn.Parameter(
-            torch.empty(out_features, in_features))
-        self.register_buffer('weight_epsilon',
-                             torch.empty(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.empty(out_features, in_features))
+        self.register_buffer("weight_epsilon", torch.empty(out_features, in_features))
         self.bias_mu = nn.Parameter(torch.empty(out_features))
         self.bias_sigma = nn.Parameter(torch.empty(out_features))
-        self.register_buffer('bias_epsilon', torch.empty(out_features))
+        self.register_buffer("bias_epsilon", torch.empty(out_features))
         self.reset_parameters()
         self.reset_noise()
 
@@ -49,21 +47,25 @@ class NoisyLinear(nn.Module):
         if not self.training:
             return F.linear(x, self.weight_mu, self.bias_mu)
         return F.linear(
-            x, self.weight_mu + self.weight_sigma * self.weight_epsilon,
-            self.bias_mu + self.bias_sigma * self.bias_epsilon)
+            x,
+            self.weight_mu + self.weight_sigma * self.weight_epsilon,
+            self.bias_mu + self.bias_sigma * self.bias_epsilon,
+        )
 
     def extra_repr(self):
-        return 'in_features={}, out_features={}, bias={}'.format(
-            self.in_features, self.out_features, True)
+        return "in_features={}, out_features={}, bias={}".format(
+            self.in_features, self.out_features, True
+        )
 
 
 class MLP(nn.Module):
     def __init__(
-        self, layers,
+        self,
+        layers,
         activation=torch.tanh,
         output_activation=None,
         output_scale=1,
-        output_squeeze=False
+        output_squeeze=False,
     ):
         super(MLP, self).__init__()
         self.layers = nn.ModuleList()
@@ -89,10 +91,12 @@ class MLP(nn.Module):
 
 class NoisyDQNetwork(nn.Module):
     def __init__(
-        self, in_features, action_space,
+        self,
+        in_features,
+        action_space,
         hidden_sizes=(400, 300),
         activation=torch.relu,
-        output_activation=None
+        output_activation=None,
     ):
         super(NoisyDQNetwork, self).__init__()
 
@@ -101,7 +105,8 @@ class NoisyDQNetwork(nn.Module):
         self.q = MLP(
             layers=[in_features] + list(hidden_sizes),
             activation=activation,
-            output_activation=output_activation)
+            output_activation=output_activation,
+        )
 
         self.q.layers.append(NoisyLinear(hidden_sizes[-1], action_dim))
 

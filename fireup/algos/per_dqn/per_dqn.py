@@ -95,7 +95,9 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             weights.append(weight / max_weight)
         weights = np.array(weights)
         encoded_sample = self._encode_sample(idxes)
-        obs_batch, act_batch, rew_batch, next_obs_batch, done_mask = list(encoded_sample)
+        obs_batch, act_batch, rew_batch, next_obs_batch, done_mask = list(
+            encoded_sample
+        )
         return dict(
             obs1=obs_batch,
             obs2=next_obs_batch,
@@ -103,7 +105,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             rews=rew_batch,
             done=np.array(done_mask, dtype=np.float32),
             weights=weights,
-            idxes=idxes
+            idxes=idxes,
         )
 
     def update_priorities(self, idxes, priorities):
@@ -150,7 +152,7 @@ def per_dqn(
     target_update_period=8000,
     batch_size=100,
     logger_kwargs=dict(),
-    save_freq=1
+    save_freq=1,
 ):
     """
     Deep Q-Network w/ Prioritized Experience Replay from https://arxiv.org/abs/1511.05952
@@ -180,7 +182,7 @@ def per_dqn(
     act_dim = 1  # env.action_space.shape
 
     # Share information about action space with policy architecture
-    ac_kwargs['action_space'] = env.action_space
+    ac_kwargs["action_space"] = env.action_space
 
     if dueling_dqn:
         dqnetwork = core.DuelingDQNetwork
@@ -199,11 +201,17 @@ def per_dqn(
     # Count variables
     if dueling_dqn:
         var_counts = tuple(
-        core.count_vars(module) for module in [main.enc, main.v, main.a, main])
-        print(('\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n')%var_counts)
+            core.count_vars(module) for module in [main.enc, main.v, main.a, main]
+        )
+        print(
+            (
+                "\nNumber of parameters: \t encoder: %d, \t value head: %d \t advantage head: %d \t total: %d\n"
+            )
+            % var_counts
+        )
     else:
         var_counts = tuple(core.count_vars(module) for module in [main.q, main])
-        print(('\nNumber of parameters: \t q: %d, \t total: %d\n')%var_counts)
+        print(("\nNumber of parameters: \t q: %d, \t total: %d\n") % var_counts)
 
     # Value train op
     value_params = main.parameters()
@@ -244,10 +252,8 @@ def per_dqn(
 
         # the epsilon value used for exploration during training
         epsilon = core.linearly_decaying_epsilon(
-            epsilon_decay_period,
-            t,
-            min_replay_history,
-            epsilon_train)
+            epsilon_decay_period, t, min_replay_history, epsilon_train
+        )
         a = get_action(o, epsilon)
 
         # Step the env
@@ -277,13 +283,13 @@ def per_dqn(
             beta = core.beta_by_frame(t, beta_start, beta_frames)
             batch = replay_buffer.sample_batch(batch_size, beta)
             (obs1, obs2, acts, rews, done, weights, idxes) = (
-                torch.Tensor(batch['obs1']),
-                torch.Tensor(batch['obs2']),
-                torch.Tensor(batch['acts']),
-                torch.Tensor(batch['rews']),
-                torch.Tensor(batch['done']),
-                torch.Tensor(batch['weights']),
-                batch['idxes']
+                torch.Tensor(batch["obs1"]),
+                torch.Tensor(batch["obs2"]),
+                torch.Tensor(batch["acts"]),
+                torch.Tensor(batch["rews"]),
+                torch.Tensor(batch["done"]),
+                torch.Tensor(batch["weights"]),
+                batch["idxes"],
             )
             q_pi = main(obs1).gather(1, acts.long()).squeeze()
             if double_dqn:
@@ -319,19 +325,19 @@ def per_dqn(
 
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs - 1):
-                logger.save_state({'env': env}, main, None)
+                logger.save_state({"env": env}, main, None)
 
             # Test the performance of the deterministic version of the agent.
             test_agent()
 
             # Log info about epoch
-            logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestEpRet', with_min_and_max=True)
-            logger.log_tabular('EpLen', average_only=True)
-            logger.log_tabular('TestEpLen', average_only=True)
-            logger.log_tabular('TotalEnvInteracts', t)
-            logger.log_tabular('QVals', with_min_and_max=True)
-            logger.log_tabular('LossQ', average_only=True)
-            logger.log_tabular('Time', time.time() - start_time)
+            logger.log_tabular("Epoch", epoch)
+            logger.log_tabular("EpRet", with_min_and_max=True)
+            logger.log_tabular("TestEpRet", with_min_and_max=True)
+            logger.log_tabular("EpLen", average_only=True)
+            logger.log_tabular("TestEpLen", average_only=True)
+            logger.log_tabular("TotalEnvInteracts", t)
+            logger.log_tabular("QVals", with_min_and_max=True)
+            logger.log_tabular("LossQ", average_only=True)
+            logger.log_tabular("Time", time.time() - start_time)
             logger.dump_tabular()

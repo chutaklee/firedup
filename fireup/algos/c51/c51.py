@@ -36,7 +36,7 @@ class ReplayBuffer:
             obs2=self.obs2_buf[idxs],
             acts=self.acts_buf[idxs],
             rews=self.rews_buf[idxs],
-            done=self.done_buf[idxs]
+            done=self.done_buf[idxs],
         )
 
 
@@ -45,6 +45,8 @@ class ReplayBuffer:
 Categorical Deep Q-Network from https://arxiv.org/abs/1707.06887
 
 """
+
+
 def c51(
     env_fn,
     dqnetwork=core.CategoricalDQNetwork,
@@ -68,7 +70,7 @@ def c51(
     target_update_period=8000,
     batch_size=100,
     logger_kwargs=dict(),
-    save_freq=1
+    save_freq=1,
 ):
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
@@ -81,10 +83,10 @@ def c51(
     act_dim = 1  # env.action_space.shape
 
     # Share information with policy architecture
-    ac_kwargs['action_space'] = env.action_space
-    ac_kwargs['num_atoms'] = num_atoms
-    ac_kwargs['Vmin'] = Vmin
-    ac_kwargs['Vmax'] = Vmax
+    ac_kwargs["action_space"] = env.action_space
+    ac_kwargs["num_atoms"] = num_atoms
+    ac_kwargs["Vmin"] = Vmin
+    ac_kwargs["Vmax"] = Vmax
 
     # Main computation graph
     main = dqnetwork(in_features=obs_dim, **ac_kwargs)
@@ -93,11 +95,7 @@ def c51(
     target = dqnetwork(in_features=obs_dim, **ac_kwargs)
 
     # Experience buffer
-    replay_buffer = ReplayBuffer(
-        obs_dim=obs_dim,
-        act_dim=act_dim,
-        size=replay_size
-    )
+    replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
     # C51 stuffs
     supports = torch.linspace(Vmin, Vmax, num_atoms)
@@ -105,7 +103,7 @@ def c51(
 
     # Count variables
     var_counts = tuple(core.count_vars(module) for module in [main.q, main])
-    print(('\nNumber of parameters: \t q: %d, \t total: %d\n')%var_counts)
+    print(("\nNumber of parameters: \t q: %d, \t total: %d\n") % var_counts)
 
     # Value train op
     value_params = main.q.parameters()
@@ -138,11 +136,11 @@ def c51(
         main.train()
         batch = replay_buffer.sample_batch(batch_size)
         (obs1, obs2, acts, rews, done) = (
-            torch.Tensor(batch['obs1']),
-            torch.Tensor(batch['obs2']),
-            torch.LongTensor(batch['acts']),  # (bsz, 1)
-            torch.Tensor(batch['rews']),  # (bsz)
-            torch.Tensor(batch['done'])  # (bsz)
+            torch.Tensor(batch["obs1"]),
+            torch.Tensor(batch["obs2"]),
+            torch.LongTensor(batch["acts"]),  # (bsz, 1)
+            torch.Tensor(batch["rews"]),  # (bsz)
+            torch.Tensor(batch["done"]),  # (bsz)
         )
 
         # compute target distribution
@@ -203,10 +201,7 @@ def c51(
 
         # the epsilon value used for exploration during training
         epsilon = core.linearly_decaying_epsilon(
-            epsilon_decay_period,
-            t,
-            min_replay_history,
-            epsilon_train
+            epsilon_decay_period, t, min_replay_history, epsilon_train
         )
         a = get_action(o, epsilon)
 
@@ -246,19 +241,19 @@ def c51(
 
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs - 1):
-                logger.save_state({'env': env}, main, None)
+                logger.save_state({"env": env}, main, None)
 
             # Test the performance of the deterministic version of the agent.
             test_agent()
 
             # Log info about epoch
-            logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestEpRet', with_min_and_max=True)
-            logger.log_tabular('EpLen', average_only=True)
-            logger.log_tabular('TestEpLen', average_only=True)
-            logger.log_tabular('TotalEnvInteracts', t)
-            logger.log_tabular('LossQ', average_only=True)
-            logger.log_tabular('QVals', with_min_and_max=True)
-            logger.log_tabular('Time', time.time() - start_time)
+            logger.log_tabular("Epoch", epoch)
+            logger.log_tabular("EpRet", with_min_and_max=True)
+            logger.log_tabular("TestEpRet", with_min_and_max=True)
+            logger.log_tabular("EpLen", average_only=True)
+            logger.log_tabular("TestEpLen", average_only=True)
+            logger.log_tabular("TotalEnvInteracts", t)
+            logger.log_tabular("LossQ", average_only=True)
+            logger.log_tabular("QVals", with_min_and_max=True)
+            logger.log_tabular("Time", time.time() - start_time)
             logger.dump_tabular()
