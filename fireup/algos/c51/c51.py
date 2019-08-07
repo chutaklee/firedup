@@ -146,12 +146,11 @@ def c51(
         # compute target distribution
         bsz = obs1.size(0)
         with torch.no_grad():
-            pns = target(obs2)  # (bsz, act_dim, num_atoms)
-            # next_act_idx = (main(obs2) * supports.expand_as(pns)).sum(-1).argmax(-1)  # double dqn
-            dist = supports.expand_as(pns) * pns
+            out2 = target(obs2)  # (bsz, act_dim, num_atoms)
+            dist = supports.expand_as(out2) * out2
             next_act_idx = dist.sum(-1).argmax(-1)  # (bsz)
 
-            pns_a = pns[range(bsz), next_act_idx]  # (bsz, num_atoms)
+            dist2_a = out2[range(bsz), next_act_idx]  # (bsz, num_atoms)
 
             rews = rews.unsqueeze(1)  # (bsz, 1)
             done = done.unsqueeze(1)  # (bsz, 1)
@@ -171,10 +170,10 @@ def c51(
 
             m = torch.zeros([bsz, num_atoms])
             m.view(-1).index_add_(
-                0, (l + offset).view(-1), (pns_a * (u.float() - b)).view(-1)
+                0, (l + offset).view(-1), (dist2_a * (u.float() - b)).view(-1)
             )
             m.view(-1).index_add_(
-                0, (u + offset).view(-1), (pns_a * (b - l.float())).view(-1)
+                0, (u + offset).view(-1), (dist2_a * (b - l.float())).view(-1)
             )
 
         log_dist1 = main(obs1, log=True)  # (bsz, action_dim, num_atoms)
@@ -189,7 +188,7 @@ def c51(
         torch.nn.utils.clip_grad_norm_(main.parameters(), grad_clip)
         value_optimizer.step()
 
-        return loss.item(), pns_a.numpy()
+        return loss.item(), (dist2_a * supports.expand_as(dist2_a)).numpy()
 
     start_time = time.time()
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
@@ -229,7 +228,7 @@ def c51(
         # train at the rate of update_period if enough training steps have been run
         if replay_buffer.size > min_replay_history and t % update_period == 0:
             loss, QDist = update()
-            logger.store(LossQ=loss, QVals=QDist.mean(-1))
+            logger.store(LossQ=loss, QVals=QDist.sum(-1))
 
         # syncs weights from online to target network
         if t % target_update_period == 0:
