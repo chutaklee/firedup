@@ -34,6 +34,9 @@ class MLP(nn.Module):
 
         for i, layer in enumerate(layers[1:]):
             self.layers.append(nn.Linear(layers[i], layer))
+            nn.init.kaiming_normal_(
+                self.layers[i].weight, mode="fan_in", nonlinearity="relu"
+            )
             nn.init.zeros_(self.layers[i].bias)
 
     def forward(self, inputs):
