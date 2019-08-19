@@ -42,7 +42,7 @@ class ReplayBuffer:
 
 """
 
-Quantile Regression Deep Q-Network from http://arxiv.org/abs/1806.06923
+Quantile Regression Deep Q-Network from https://arxiv.org/abs/1710.10044
 
 """
 
