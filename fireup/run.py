@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     # more algorithms
     valid_algos += ['double_dqn', 'dueling_dqn', 'noisy_dqn', 'per_dqn'] # Vanilla DQNs
-    valid_algos += ['c51', 'qr_dqn', 'rainbow'] # Distributional DQNs
+    valid_algos += ['c51', 'qr_dqn', 'iqn', 'rainbow'] # Distributional DQNs
 
     valid_utils = ['plot', 'test_policy']
     valid_help = ['--help', '-h', 'help']

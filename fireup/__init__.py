@@ -15,6 +15,7 @@ from fireup.algos.per_dqn.per_dqn import per_dqn
 
 from fireup.algos.c51.c51 import c51
 from fireup.algos.qr_dqn.qr_dqn import qr_dqn
+from fireup.algos.iqn.iqn import iqn
 from fireup.algos.rainbow.rainbow import rainbow
 
 # Loggers
