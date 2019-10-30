@@ -147,10 +147,10 @@ def c51(
         bsz = obs1.size(0)
         with torch.no_grad():
             out2 = target(obs2)  # (bsz, act_dim, num_atoms)
-            dist = supports.expand_as(out2) * out2
-            next_act_idx = dist.sum(-1).argmax(-1)  # (bsz)
+            dist2 = supports.expand_as(out2) * out2
+            act2_idx = dist2.sum(-1).argmax(-1)  # (bsz)
 
-            dist2_a = out2[range(bsz), next_act_idx]  # (bsz, num_atoms)
+            dist2_a = out2[range(bsz), act2_idx]  # (bsz, num_atoms)
 
             rews = rews.unsqueeze(1)  # (bsz, 1)
             done = done.unsqueeze(1)  # (bsz, 1)
